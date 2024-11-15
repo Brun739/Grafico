@@ -1,51 +1,93 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 function App() {
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currencies, setCurrencies] = useState<string[]>([]);
+  const [fromCurrency, setFromCurrency] = useState('USD');
+  const [toCurrency, setToCurrency] = useState('BRL');
+  const [amount, setAmount] = useState(1);
+  const [result, setResult] = useState<number | null>(null);
+  const [error, setError] = useState('');
 
-  const handleConversion = async () => {
-    try {
-      setFeedbackMessage(null);
-      setErrorMessage(null);
-      
-     //exmemplo de api 
-      const response = await fetch('API_URL');
-      if (!response.ok) {
-        if (response.status === 400) {
-          throw new Error("Requisição inválida. Verifique os valores inseridos e tente novamente.");
-        } else if (response.status === 404) {
-          throw new Error("Serviço de conversão não encontrado. Tente novamente mais tarde.");
-        } else if (response.status === 500) {
-          throw new Error("Erro interno do servidor. Tente novamente em alguns minutos.");
-        } else {
-          throw new Error("Erro desconhecido. Verifique sua conexão e tente novamente.");
+  // Carregar lista de moedas e taxas de câmbio na montagem do componente
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`); // Altere para uma chave válida de API, se necessário
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Erro ao carregar dados da API');
         }
-      }
 
+        // Extrair as moedas disponíveis das taxas de câmbio
+        setCurrencies(Object.keys(data.rates));
+      } catch (err) {
+        setError('Erro ao carregar dados da API. Tente novamente mais tarde.');
+      }
+    };
+
+    fetchCurrencies();
+  }, []);
+
+  const handleConvert = async () => {
+    setError('');
+    setResult(null);
+
+    if (fromCurrency === toCurrency) {
+      setResult(amount);
+      return;
+    }
+
+    try {
+      const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
       const data = await response.json();
 
-      if (!data || !data.convertedValue) {
-        throw new Error("Erro na conversão. Verifique os valores de moeda e tente novamente.");
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'Erro ao obter taxas de câmbio');
       }
 
-      
-      setFeedbackMessage(`Conversão realizada com sucesso! Valor: ${data.convertedValue}`);
-      setErrorMessage(null);
-    } catch (error: any) {
+      const rate = data.rates[toCurrency];
+      if (!rate) throw new Error("Taxa de conversão não encontrada.");
 
-      setErrorMessage(error.message || 'Erro ao tentar converter moeda.');
+      setResult(amount * rate);
+    } catch (err) {
+      setError('Erro ao obter taxas de câmbio. Verifique a conexão e tente novamente.');
     }
   };
 
   return (
-    <div className="App">
-      <h1>Conversor de Moedas</h1>
-      <button onClick={handleConversion}>Converter</button>
-
-      {feedbackMessage && <div className="feedback">{feedbackMessage}</div>}
-      {errorMessage && <div className="error">{errorMessage}</div>}
+    <div className="app-container">
+      <h1>Conversão de Moedas</h1>
+      <div className="currency-form">
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          placeholder="Valor"
+        />
+        <select
+          value={fromCurrency}
+          onChange={(e) => setFromCurrency(e.target.value)}
+        >
+          {currencies.map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </select>
+        <select
+          value={toCurrency}
+          onChange={(e) => setToCurrency(e.target.value)}
+        >
+          {currencies.map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
+        </select>
+        <button className="convert-button" onClick={handleConvert}>Converter</button>
+      </div>
+      {result !== null && (
+        <p>Resultado: {result.toFixed(2)} {toCurrency}</p>
+      )}
+      {error && <p className="error-message">{error}</p>}
     </div>
   );
 }

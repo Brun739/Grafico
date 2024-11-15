@@ -29,6 +29,22 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5;
+  color: #333;
+}
+.error-message {
+  color: red;
+  font-weight: bold;
+}
+
+.success-message {
+  color: green;
+  font-weight: bold;
+}
+
 
 h1 {
   font-size: 3.2em;
