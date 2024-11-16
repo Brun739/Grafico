@@ -54,4 +54,27 @@
   color: red;
   margin-top: 10px;
 }
+.chart-container {
+  margin-top: 30px;
+  width: 80%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
+.error-message {
+  color: red;
+  font-weight: bold;
+}
+.chart-container {
+  margin-top: 30px;
+  width: 80%;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.error-message {
+  color: red;
+  font-weight: bold;
+}
